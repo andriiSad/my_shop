@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/auth.dart';
 import '../providers/cart.dart';
 import '../providers/product.dart';
 import '../screens/product_detail_screen.dart';
@@ -16,6 +17,7 @@ class ProductItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final product = Provider.of<Product>(context, listen: false);
     final cart = Provider.of<Cart>(context, listen: false);
+    final authData = Provider.of<Auth>(context, listen: false);
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: GridTile(
@@ -26,9 +28,14 @@ class ProductItem extends StatelessWidget {
               arguments: product.id,
             );
           },
-          child: Image.network(
-            product.imageUrl,
-            fit: BoxFit.cover,
+          child: Hero(
+            tag: product.id,
+            child: FadeInImage(
+              placeholder:
+                  const AssetImage('assets/images/product-placeholder.png'),
+              image: NetworkImage(product.imageUrl),
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         footer: GridTileBar(
@@ -39,7 +46,24 @@ class ProductItem extends StatelessWidget {
                 product.isFavorite ? Icons.favorite : Icons.favorite_border,
               ),
               onPressed: () {
-                product.toggleFavoriteStatus();
+                product
+                    .toggleFavoriteStatus(
+                  authData.token,
+                  authData.userId,
+                )
+                    .catchError((error) {
+                  Scaffold.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        error.toString(),
+                        textAlign: TextAlign.center,
+                      ),
+                      duration: const Duration(
+                        seconds: 1,
+                      ),
+                    ),
+                  );
+                });
               },
               color: Theme.of(context).colorScheme.secondary,
             ),
@@ -49,8 +73,9 @@ class ProductItem extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           trailing: IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.shopping_cart,
+              color: Theme.of(context).colorScheme.secondary,
             ),
             onPressed: () {
               cart.addItem(
@@ -58,6 +83,21 @@ class ProductItem extends StatelessWidget {
                 product.price,
                 product.title,
               );
+              Scaffold.of(context).hideCurrentSnackBar();
+              Scaffold.of(context).showSnackBar(SnackBar(
+                content: const Text(
+                  'Added item to cart!',
+                ),
+                duration: const Duration(
+                  seconds: 2,
+                ),
+                action: SnackBarAction(
+                  label: 'UNDO',
+                  onPressed: () {
+                    cart.removeSingleItem(product.id);
+                  },
+                ),
+              ));
             },
             color: Theme.of(context).colorScheme.secondary,
           ),

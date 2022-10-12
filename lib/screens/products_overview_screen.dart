@@ -2,10 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:my_shop/screens/cart_screen.dart';
+import 'package:my_shop/widgets/app_drawer.dart';
 import 'package:my_shop/widgets/badge.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/cart.dart';
+import '../providers/products.dart';
 import '../widgets/products_grid.dart';
 
 enum FilterOptions {
@@ -20,6 +22,24 @@ class ProductsOverviewScreen extends StatefulWidget {
 
 class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
   var _showOnlyFavotites = false;
+  var _isLoading = false;
+
+  @override
+  void initState() {
+    setState(() {
+      _isLoading = true;
+    });
+    Provider.of<Products>(
+      context,
+      listen: false,
+    ).fetchAndSetProducts().then((_) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +75,7 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
             builder: (_, cart, ch) => Badge(
               child: ch!,
               value: cart.itemCount.toString(),
-              color: Colors.amber,
+              color: Theme.of(context).colorScheme.secondary,
             ),
             child: IconButton(
               icon: const Icon(
@@ -68,7 +88,12 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
           ),
         ],
       ),
-      body: ProductsGrid(_showOnlyFavotites),
+      drawer: const AppDrawer(),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : ProductsGrid(_showOnlyFavotites),
     );
   }
 }

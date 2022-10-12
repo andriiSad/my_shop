@@ -39,6 +39,30 @@ class CartItem extends StatelessWidget {
         ),
       ),
       direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) {
+        return showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Are you sure?'),
+            content:
+                const Text('Do ypu want to remove the item from the cart?'),
+            actions: [
+              TextButton(
+                child: const Text('No'),
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+              ),
+              TextButton(
+                child: const Text('Yes'),
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                },
+              ),
+            ],
+          ),
+        );
+      },
       onDismissed: (direction) {
         Provider.of<Cart>(
           context,
@@ -69,8 +93,9 @@ class CartItem extends StatelessWidget {
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
             title: Text(title),
-            subtitle: Text('Total: \$${(price * quantity)}'),
-            trailing: Text('$quantity xxxxxx'),
+            subtitle: Text(
+                'Total: \$${double.parse((price * quantity).toStringAsFixed(2))}'),
+            trailing: Text('$quantity x'),
           ),
         ),
       ),
